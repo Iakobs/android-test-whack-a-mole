@@ -1,6 +1,7 @@
 package com.agpfd.whackamole;
 
 import android.app.Activity;
+import android.media.AudioManager;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,6 +30,7 @@ public class WhackAMoleActivity extends Activity {
         setContentView(R.layout.whackamole_layout);
         myWhackAMoleView = (WhackAMoleView) findViewById(R.id.mole);
         myWhackAMoleView.setKeepScreenOn(true);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
     @Override
@@ -44,9 +46,11 @@ public class WhackAMoleActivity extends Activity {
                 String soundEnabledText = getString(R.string.sound_on);
                 if (soundEnabled) {
                     soundEnabled = false;
+                    myWhackAMoleView.soundOn = false;
                     soundEnabledText = getString(R.string.sound_off);
                 } else {
                     soundEnabled = true;
+                    myWhackAMoleView.soundOn = true;
                 }
                 Toast.makeText(this, soundEnabledText, Toast.LENGTH_SHORT).show();
                 break;

@@ -7,6 +7,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.media.AudioManager;
+import android.media.SoundPool;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -52,6 +54,10 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
     private int molesMissed;
     private int fingerX, fingerY;
     private Paint blackPaint;
+    private static SoundPool sounds;
+    private static int whackSound;
+    private static int missSound;
+    public boolean soundOn = true;
 
     public WhackAMoleView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -81,6 +87,9 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
             backgroundImg = BitmapFactory.decodeResource(res, R.drawable.title);
             backgroundOrigW = backgroundImg.getWidth();
             backgroundOrigH = backgroundImg.getHeight();
+            sounds = new SoundPool(5, AudioManager.STREAM_MUSIC, 0);
+            whackSound = sounds.load(myContext, R.raw.whack, 1);
+            missSound = sounds.load(myContext, R.raw.miss, 1);
         }
 
         @Override
@@ -144,6 +153,13 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                         fingerY = Y;
                         if (!onTitle && detectMoleContact()) {
                             whacking = true;
+                            if (soundOn) {
+                                AudioManager audioManager = (AudioManager)
+                                        myContext.getSystemService(Context.AUDIO_SERVICE);
+                                float volume = (float)
+                                        audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                                sounds.play(whackSound, volume, volume, 1, 0, 1);
+                            }
                             molesWhacked++;
                         }
                         break;
@@ -237,6 +253,13 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
 
         private void pickActiveMole() {
             if (!moleJustHit && activeMole > 0) {
+                if (soundOn) {
+                    AudioManager audioManager = (AudioManager)
+                            myContext.getSystemService(Context.AUDIO_SERVICE);
+                    float volume = (float)
+                            audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                    sounds.play(missSound, volume, volume, 1, 0, 1);
+                }
                 molesMissed++;
             }
             activeMole = new Random().nextInt(7) + 1;
