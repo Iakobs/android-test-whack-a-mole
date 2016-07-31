@@ -5,6 +5,8 @@ import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
@@ -44,6 +46,12 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
     private boolean moleSinking = false;
     private int moleRate = 5;
     private boolean moleJustHit = false;
+    private Bitmap whack;
+    private boolean whacking = false;
+    private int molesWhacked;
+    private int molesMissed;
+    private int fingerX, fingerY;
+    private Paint blackPaint;
 
     public WhackAMoleView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -97,6 +105,11 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
             try {
                 canvas.drawBitmap(backgroundImg, 0, 0, null);
                 if (!onTitle) {
+                    canvas.drawText(res.getString(R.string.whacked, molesWhacked), 10,
+                            blackPaint.getTextSize() + 10, blackPaint);
+                    canvas.drawText(res.getString(R.string.missed, molesMissed),
+                            screenW - (int) (200 * drawScaleW),
+                            blackPaint.getTextSize() + 10, blackPaint);
                     for (int i = 0; i < moleX.length; i++) {
                         canvas.drawBitmap(mole, moleX[i], moleY[i], null);
                     }
@@ -108,6 +121,10 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                         }
                         canvas.drawBitmap(mask, i * drawScaleW, factor * drawScaleH, null);
                         loop++;
+                    }
+                    if (whacking) {
+                        canvas.drawBitmap(whack, fingerX - (whack.getWidth() / 2),
+                                fingerY - (whack.getHeight() / 2), null);
                     }
                 }
             } catch (Exception e) {
@@ -123,7 +140,12 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
 
                 switch (eventaction) {
                     case MotionEvent.ACTION_DOWN:
-
+                        fingerX = X;
+                        fingerY = Y;
+                        if (!onTitle && detectMoleContact()) {
+                            whacking = true;
+                            molesWhacked++;
+                        }
                         break;
                     case MotionEvent.ACTION_MOVE:
 
@@ -135,15 +157,19 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                                     screenH, true);
                             mask = BitmapFactory.decodeResource(res, R.drawable.mask);
                             mole = BitmapFactory.decodeResource(res, R.drawable.mole);
+                            whack = BitmapFactory.decodeResource(res, R.drawable.whack);
                             scaleW = (float) screenW / (float) backgroundOrigW;
                             scaleH = (float) screenH / (float) backgroundOrigH;
                             mask = Bitmap.createScaledBitmap(mask, (int) (mask.getWidth() *
                                     scaleW), (int) (mask.getHeight() * scaleH), true);
                             mole = Bitmap.createScaledBitmap(mole, (int) (mole.getWidth() *
                                     scaleW), (int) (mole.getHeight() * scaleH), true);
+                            whack = Bitmap.createScaledBitmap(whack, (int) (whack.getWidth() *
+                                    scaleW), (int) (whack.getHeight() * scaleH), true);
                             onTitle = false;
                             pickActiveMole();
                         }
+                        whacking = false;
                         break;
                 }
             }
@@ -169,6 +195,12 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                     }
                     moleY[i] = (int) (factor * drawScaleH);
                 }
+                blackPaint = new Paint();
+                blackPaint.setAntiAlias(true);
+                blackPaint.setColor(Color.BLACK);
+                blackPaint.setStyle(Paint.Style.STROKE);
+                blackPaint.setTextAlign(Paint.Align.LEFT);
+                blackPaint.setTextSize(drawScaleW * 30);
             }
         }
 
@@ -177,7 +209,7 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
         }
 
         private void animateMoles() {
-            for (int i = 0; i < moleX.length; i++) {
+            for (int i = 0; i < moleY.length; i++) {
                 if (activeMole == i + 1) {
                     if (moleRising) {
                         moleY[i] -= moleRate;
@@ -190,7 +222,7 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                         factorX = 425;
                         factorY = 250;
                     }
-                    if (moleY[i]  >= (int) (factorX * drawScaleH) || moleJustHit) {
+                    if (moleY[i] >= (int) (factorX * drawScaleH) || moleJustHit) {
                         moleY[i] = (int) (factorX * drawScaleH);
                         pickActiveMole();
                     }
@@ -204,9 +236,33 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
         }
 
         private void pickActiveMole() {
+            if (!moleJustHit && activeMole > 0) {
+                molesMissed++;
+            }
             activeMole = new Random().nextInt(7) + 1;
             moleRising = true;
             moleSinking = false;
+            moleJustHit = false;
+            moleRate = 5 + (molesWhacked / 10);
+        }
+
+        private boolean detectMoleContact() {
+            boolean contact = false;
+            for (int i = 0; i < moleX.length; i++) {
+                int factor = 450;
+                if (i % 2 != 0) {
+                    factor = 400;
+                }
+                if (activeMole == i + 1 &&
+                        fingerX >= moleX[i] &&
+                        fingerX < moleX[i] + (int) (88 * drawScaleW) &&
+                        fingerY > moleY[i] &&
+                        fingerY < factor * drawScaleH) {
+                    contact = true;
+                    moleJustHit = true;
+                }
+            }
+            return contact;
         }
     }
 

@@ -3,4 +3,6 @@
     <string name="toggle_sound">Toggle Sound</string>
     <string name="sound_on">Sound On</string>
     <string name="sound_off">Soun Off</string>
+    <string name="whacked">Whacked: %1d</string>
+    <string name="missed">Missed: %1d</string>
 </resources>

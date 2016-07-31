@@ -1,6 +1,8 @@
 <resources>
-    <string name="app_name">Whack A Mole!</string>
+    <string name="app_name">¡Aplasta Topos!</string>
     <string name="toggle_sound">Conmuta el sonido</string>
     <string name="sound_on">Sonido Activado</string>
     <string name="sound_off">Sonido Desactivado</string>
+    <string name="missed">Perdidos: %1d</string>
+    <string name="whacked">Aplastados: %1d</string>
 </resources>
