@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">Whack A Mole!</string>
+    <string name="toggle_sound">Toggle Sound</string>
+    <string name="sound_on">Sound On</string>
+    <string name="sound_off">Soun Off</string>
 </resources>

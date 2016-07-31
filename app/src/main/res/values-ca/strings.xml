@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Whack A Mole!</string>
+    <string name="toggle_sound">Commuta el so</string>
+    <string name="sound_on">So Activat</string>
+    <string name="sound_off">So Desactivat</string>
+</resources>
