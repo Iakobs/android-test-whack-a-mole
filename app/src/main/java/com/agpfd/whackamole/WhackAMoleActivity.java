@@ -1,6 +1,7 @@
 package com.agpfd.whackamole;
 
 import android.app.Activity;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.os.Bundle;
 import android.view.Menu;
@@ -12,6 +13,7 @@ import android.widget.Toast;
 public class WhackAMoleActivity extends Activity {
 
     private static final int TOGGLE_SOUND = 1;
+    private static final String PREFERENCES_NAME = "MyPreferences";
 
     private WhackAMoleView myWhackAMoleView;
     private boolean soundEnabled = true;
@@ -31,6 +33,9 @@ public class WhackAMoleActivity extends Activity {
         myWhackAMoleView = (WhackAMoleView) findViewById(R.id.mole);
         myWhackAMoleView.setKeepScreenOn(true);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        SharedPreferences settings = getSharedPreferences(PREFERENCES_NAME, 0);
+        soundEnabled = settings.getBoolean("soundSetting", true);
+        myWhackAMoleView.soundOn = soundEnabled;
     }
 
     @Override
@@ -52,6 +57,10 @@ public class WhackAMoleActivity extends Activity {
                     soundEnabled = true;
                     myWhackAMoleView.soundOn = true;
                 }
+                SharedPreferences settings = getSharedPreferences(PREFERENCES_NAME, 0);
+                SharedPreferences.Editor editor = settings.edit();
+                editor.putBoolean("soundSetting", soundEnabled);
+                editor.commit();
                 Toast.makeText(this, soundEnabledText, Toast.LENGTH_SHORT).show();
                 break;
         }
