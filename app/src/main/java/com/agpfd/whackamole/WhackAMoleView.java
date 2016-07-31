@@ -12,6 +12,8 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.util.Random;
+
 /**
  * @author <a mailto="jacobibanez@jacobibanez.com">Jacob Ibáñez Sánchez</a>
  * @since 29/07/2016
@@ -37,6 +39,11 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
     private Bitmap mask;
     private int[] moleX = new int[7];
     private int[] moleY = new int[7];
+    private int activeMole = 0;
+    private boolean moleRising = true;
+    private boolean moleSinking = false;
+    private int moleRate = 5;
+    private boolean moleJustHit = false;
 
     public WhackAMoleView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -75,6 +82,7 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                 try {
                     c = mySurfaceHolder.lockCanvas(null);
                     synchronized (mySurfaceHolder) {
+                        animateMoles();
                         draw(c);
                     }
                 } finally {
@@ -134,6 +142,7 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                             mole = Bitmap.createScaledBitmap(mole, (int) (mole.getWidth() *
                                     scaleW), (int) (mole.getHeight() * scaleH), true);
                             onTitle = false;
+                            pickActiveMole();
                         }
                         break;
                 }
@@ -165,6 +174,39 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
 
         public void setRunning(boolean b) {
             running = b;
+        }
+
+        private void animateMoles() {
+            for (int i = 0; i < moleX.length; i++) {
+                if (activeMole == i + 1) {
+                    if (moleRising) {
+                        moleY[i] -= moleRate;
+                    } else if (moleSinking) {
+                        moleY[i] += moleRate;
+                    }
+                    int factorX = 475;
+                    int factorY = 300;
+                    if (i % 2 != 0) {
+                        factorX = 425;
+                        factorY = 250;
+                    }
+                    if (moleY[i]  >= (int) (factorX * drawScaleH) || moleJustHit) {
+                        moleY[i] = (int) (factorX * drawScaleH);
+                        pickActiveMole();
+                    }
+                    if (moleY[i] <= (int) (factorY * drawScaleH)) {
+                        moleY[i] = (int) (factorY * drawScaleH);
+                        moleRising = false;
+                        moleSinking = true;
+                    }
+                }
+            }
+        }
+
+        private void pickActiveMole() {
+            activeMole = new Random().nextInt(7) + 1;
+            moleRising = true;
+            moleSinking = false;
         }
     }
 
