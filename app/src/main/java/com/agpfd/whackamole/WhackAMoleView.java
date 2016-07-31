@@ -24,6 +24,8 @@ import java.util.Random;
  */
 public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callback {
 
+    private static final int MOLES_MISSED_TO_GAMEOVER = 5;
+
     private Resources res;
     private Context myContext;
     private SurfaceHolder mySurfaceHolder;
@@ -58,6 +60,8 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
     private static int whackSound;
     private static int missSound;
     public boolean soundOn = true;
+    private boolean gameOver = false;
+    private Bitmap gameOverDialog;
 
     public WhackAMoleView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -99,7 +103,7 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                 try {
                     c = mySurfaceHolder.lockCanvas(null);
                     synchronized (mySurfaceHolder) {
-                        animateMoles();
+                        if (!gameOver) animateMoles();
                         draw(c);
                     }
                 } finally {
@@ -135,6 +139,11 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                         canvas.drawBitmap(whack, fingerX - (whack.getWidth() / 2),
                                 fingerY - (whack.getHeight() / 2), null);
                     }
+                    if (gameOver) {
+                        canvas.drawBitmap(gameOverDialog, (screenW / 2) -
+                                (gameOverDialog.getWidth() / 2), (screenH / 2) -
+                                (gameOverDialog.getHeight() / 2), null);
+                    }
                 }
             } catch (Exception e) {
 
@@ -149,18 +158,20 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
 
                 switch (eventaction) {
                     case MotionEvent.ACTION_DOWN:
-                        fingerX = X;
-                        fingerY = Y;
-                        if (!onTitle && detectMoleContact()) {
-                            whacking = true;
-                            if (soundOn) {
-                                AudioManager audioManager = (AudioManager)
-                                        myContext.getSystemService(Context.AUDIO_SERVICE);
-                                float volume = (float)
-                                        audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-                                sounds.play(whackSound, volume, volume, 1, 0, 1);
+                        if (!gameOver) {
+                            fingerX = X;
+                            fingerY = Y;
+                            if (!onTitle && detectMoleContact()) {
+                                whacking = true;
+                                if (soundOn) {
+                                    AudioManager audioManager = (AudioManager)
+                                            myContext.getSystemService(Context.AUDIO_SERVICE);
+                                    float volume = (float)
+                                            audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                                    sounds.play(whackSound, volume, volume, 1, 0, 1);
+                                }
+                                molesWhacked++;
                             }
-                            molesWhacked++;
                         }
                         break;
                     case MotionEvent.ACTION_MOVE:
@@ -174,6 +185,7 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                             mask = BitmapFactory.decodeResource(res, R.drawable.mask);
                             mole = BitmapFactory.decodeResource(res, R.drawable.mole);
                             whack = BitmapFactory.decodeResource(res, R.drawable.whack);
+                            gameOverDialog = BitmapFactory.decodeResource(res, R.drawable.gameover);
                             scaleW = (float) screenW / (float) backgroundOrigW;
                             scaleH = (float) screenH / (float) backgroundOrigH;
                             mask = Bitmap.createScaledBitmap(mask, (int) (mask.getWidth() *
@@ -182,10 +194,20 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                                     scaleW), (int) (mole.getHeight() * scaleH), true);
                             whack = Bitmap.createScaledBitmap(whack, (int) (whack.getWidth() *
                                     scaleW), (int) (whack.getHeight() * scaleH), true);
+                            gameOverDialog = Bitmap.createScaledBitmap(gameOverDialog,
+                                    (int) (gameOverDialog.getWidth() * scaleW),
+                                    (int) (gameOverDialog.getHeight() * scaleH), true);
                             onTitle = false;
                             pickActiveMole();
                         }
                         whacking = false;
+                        if (gameOver) {
+                            molesWhacked = 0;
+                            molesMissed = 0;
+                            activeMole = 0;
+                            pickActiveMole();
+                            gameOver = false;
+                        }
                         break;
                 }
             }
@@ -261,6 +283,9 @@ public class WhackAMoleView extends SurfaceView implements SurfaceHolder.Callbac
                     sounds.play(missSound, volume, volume, 1, 0, 1);
                 }
                 molesMissed++;
+                if (molesMissed >= MOLES_MISSED_TO_GAMEOVER) {
+                    gameOver = true;
+                }
             }
             activeMole = new Random().nextInt(7) + 1;
             moleRising = true;
